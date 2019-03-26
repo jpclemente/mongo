@@ -19,7 +19,7 @@ def get_dict(element, identifier):
 
 def write(publications):
     connection = MongoClient('localhost', 27017)
-    db = connection.practica_prueba
+    db = connection.practica_mongo
     db.publications.insert_many(publications)
     print(db.publications.find())
     connection.close()
@@ -34,7 +34,7 @@ limit = 100000
 publication_id = 0
 doc = etree.iterparse(
     'data/dblp.xml',
-    #tag = ["article", "inproceedings", "incollection"],
+    tag = ["article", "inproceedings", "incollection"],
     events = ["end"],
     load_dtd=True,
     dtd_validation=True,
@@ -42,23 +42,19 @@ doc = etree.iterparse(
 
 for event, elem in doc:
     count += 1
-    if elem.tag in ["article", "inproceedings", "incollection"]:
-        publication_id += 1
-        if elem.tag == "article":
-            articles += 1
-        elif elem.tag == "inproceedings":
-            inproceedings += 1
-        else:
-            incollection += 1
-        result.append(get_dict(elem, publication_id))
-        if result.__len__() == limit:
-            print("articles: " + str(articles))
-            print("inproceedings: " + str(inproceedings))
-            print("incollection: " + str(incollection))
-            print("total: " + str(count))
-            print("result: " + str(result.__len__()))
-            write(result)
-            result = []
+    publication_id += 1
+    if elem.tag == "article":
+        articles += 1
+    elif elem.tag == "inproceedings":
+        inproceedings += 1
     else:
-        continue
+        incollection += 1
+    result.append(get_dict(elem, publication_id))
+    if result.__len__() == limit:
+        print("articles: " + str(articles))
+        print("inproceedings: " + str(inproceedings))
+        print("incollection: " + str(incollection))
+        print("total: " + str(count))
+        write(result)
+        result = []
     elem.clear()
