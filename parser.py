@@ -19,7 +19,6 @@ def write(result):
     print(db.publications.find())
     connection.close()
 
-
 result = []
 count = 0
 articles = 0
