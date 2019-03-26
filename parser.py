@@ -13,7 +13,7 @@ def get_dict(element, identifier):
             authors.append(child.text)
         elif child.tag == 'title':
             publication['title'] = child.text
-    publication['author'] = authors
+    publication['authors'] = authors
     return publication
 
 
@@ -51,7 +51,6 @@ for event, elem in doc:
         else:
             incollection += 1
         result.append(get_dict(elem, publication_id))
-        print(get_dict(elem, publication_id))
         if result.__len__() == limit:
             print("articles: " + str(articles))
             print("inproceedings: " + str(inproceedings))
