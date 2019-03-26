@@ -3,13 +3,18 @@ from pymongo import MongoClient
 
 
 def get_dict(element, identifier):
-    return {
-        '_id': identifier,
-        'type': element.tag,
-        'date': element.findtext('mdate'),
-        'title': element.findtext('title'),
-        'authors': element.findtext('author')
-    }
+    publication = {}
+    publication['_id'] = identifier
+    publication['type'] = element.tag
+    publication['date'] = element.get('mdate')
+    authors = []
+    for child in element.getchildren():
+        if child.tag == 'author':
+            authors.append(child.text)
+        elif child.tag == 'title':
+            publication['title'] = child.text
+    publication['author'] = authors
+    return publication
 
 
 def write(publications):
@@ -27,7 +32,13 @@ inproceedings = 0
 incollection = 0
 limit = 100000
 publication_id = 0
-doc = etree.iterparse('data/dblp.xml', events=["end"], load_dtd=True, dtd_validation=True, encoding="ISO-8859-1")
+doc = etree.iterparse(
+    'data/dblp.xml',
+    #tag = ["article", "inproceedings", "incollection"],
+    events = ["end"],
+    load_dtd=True,
+    dtd_validation=True,
+    encoding="ISO-8859-1")
 
 for event, elem in doc:
     count += 1
