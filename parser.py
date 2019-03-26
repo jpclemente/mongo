@@ -27,7 +27,7 @@ inproceedings = 0
 incollection = 0
 limit = 100000
 publication_id = 0
-doc = etree.iterparse('data/dblp.xml', html=True, events=["end"])
+doc = etree.iterparse('data/dblp.xml', events=["end"], load_dtd=True, dtd_validation=True, encoding="ISO-8859-1")
 
 for event, elem in doc:
     count += 1
@@ -39,13 +39,14 @@ for event, elem in doc:
             inproceedings += 1
         else:
             incollection += 1
-        print("total: " + str(count))
-        print("articles: " + str(articles))
-        print("inproceedings: " + str(inproceedings))
-        print("incollection: " + str(incollection))
-        print("result: " + str(result.__len__()))
         result.append(get_dict(elem, publication_id))
+        print(get_dict(elem, publication_id))
         if result.__len__() == limit:
+            print("articles: " + str(articles))
+            print("inproceedings: " + str(inproceedings))
+            print("incollection: " + str(incollection))
+            print("total: " + str(count))
+            print("result: " + str(result.__len__()))
             write(result)
             result = []
     else:
