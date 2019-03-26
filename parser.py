@@ -23,6 +23,10 @@ def write(publications):
     db.publications.insert_many(publications)
     print(db.publications.find())
     connection.close()
+    print("articles: " + str(articles))
+    print("inproceedings: " + str(inproceedings))
+    print("incollection: " + str(incollection))
+    print("total: " + str(count))
 
 
 result = []
@@ -30,7 +34,7 @@ count = 0
 articles = 0
 inproceedings = 0
 incollection = 0
-limit = 100000
+limit = 500000
 publication_id = 0
 doc = etree.iterparse(
     'data/dblp.xml',
@@ -51,10 +55,7 @@ for event, elem in doc:
         incollection += 1
     result.append(get_dict(elem, publication_id))
     if result.__len__() == limit:
-        print("articles: " + str(articles))
-        print("inproceedings: " + str(inproceedings))
-        print("incollection: " + str(incollection))
-        print("total: " + str(count))
         write(result)
         result = []
     elem.clear()
+write(result)
