@@ -1,7 +1,7 @@
 from pymongo import MongoClient
 client = MongoClient()
 #client = MongoClient('localhost', 27017)
-db = client.practica_prueba
+db = client.practica_mongo_def
 publications = db.publications
 
 # Pregunta 1.- Listado de todas las publicaciones de un autor determinado.
@@ -19,18 +19,36 @@ answer_3 = db.publications.find({"$and": [{"date" : {"$regex": "2017"}}, {"type"
 print 'El numero de articulos en revista para el anyo 2017 es ',answer_3
 
 # Pregunta 4.- Numero de autores ocasionales, es decir, que tengan menos de 5 publicaciones en total.
-#answer_4 = db.publications.find(db.publications.aggregate([{"$unwind": "$authors"}, {"$group": {"_id": "$authors", "publication_count": { $sum:1}}}, {"publication_count": { $lt:5}}], { allowDiskUse: true } )).count()
-#for line in answer_4:
-#    print(line)
-
+pipeline_answer_4 = [{"$unwind": "$authors"},
+                     {"$sortByCount":"$authors"},
+                     { "$match": {"count": { "$lt":5}}},
+                     {"$count": "authors"}]
+answer_4 = db.publications.aggregate(pipeline_answer_4, allowDiskUse=True)
+print 'El numero de autores con menos de 5 publicaciones es '
+for line in answer_4:
+    print(line)
 # Pregunta 5.- Numero de articulos de revista (article) y numero de articulos en congresos
 # (inproceedings) de los diez autores con mas publicaciones totales.
-answer_5 = db.publications.aggregate([{"$match":{"$or":[{"type":"article"},{"type":"inproceedings"}]}},{"$sortByCount":"$title"},{"$limit":10}], allowDiskUse=True)
+pipeline_answer_5 =[{"$unwind": "$authors"},
+                    {"$group":{"_id": "$authors",
+                             "count_all_publications": {"$sum":1},
+                             "count_article": {"$sum" : {"$cond" : { "if": { "$eq": ["$type", "article"]}, "then": 1, "else": 0}}},
+                             "count_inproceedings": {"$sum" : {"$cond" : { "if": { "$eq": ["$type", "inproceedings"]}, "then": 1, "else": 0}}}}},
+                    {"$sort": {"count_all_publications": -1}},
+                    {"$limit": 10}]
+answer_5 = db.publications.aggregate(pipeline_answer_5, allowDiskUse=True)
 print 'El numero de articulos de revista y numero de articulos en congresos de los diez autores con mas publicaciones totales viene dado a continuacion:'
 for line in answer_5:
     print(line)
 
 # Pregunta 6.- Numero medio de autores de todas las publicaciones que tenga en su conjunto de datos.
+pipeline_answer_6 =[{"$project": { "numAuthors": { "$size": "$authors" }}},
+                    {"$group":{"_id": "null","MeanOfAuthors": {"$avg": "$numAuthors"}}},
+                    {"$project" : {"MeanOfAuthors":1, "_id":0}}]
+answer_6 = db.publications.aggregate(pipeline_answer_6)
+print 'El numero medio de autores de todas las mublicaciones del conjunto de datos es:'
+for line in answer_6:
+    print(line)
 
 # Pregunta 7.- Listado de coautores de un autor (Se denomina coautor a cualquier persona que haya
 # firmado una publicacion).
