@@ -2,12 +2,13 @@ from lxml import etree
 import pandas as pd
 
 
-author_nodes = {'name': []}
-publication_nodes = {'type':[], 'date':[], 'title':[]}
-aristas = pd.DataFrame()
+publication_nodes = {'publication_id': [], 'type':[], 'date':[], 'title':[]}
+relationships = {'name':[], 'publication_id': []}
 count = 0
 total = 0
-limit = 100000
+publication_id = 0
+author_id = 0
+limit = 500000
 doc = etree.iterparse(
     'data/dblp.xml',
     tag = ["article", "inproceedings", "incollection"],
@@ -19,27 +20,46 @@ doc = etree.iterparse(
 for event, elem in doc:
     count += 1
     total += 1
+    publication_id +=1
+    publication_nodes['publication_id'] = publication_id
     publication_nodes['type'].append(elem.tag)
     publication_nodes['date'].append(elem.get('mdate'))
     for child in elem.getchildren():
         if child.tag == 'author':
-            author_nodes['name'].append(child.text)
+            relationships['name'].append(child.text)
+            relationships['publication_id'].append(publication_id)
         elif child.tag == 'title':
             publication_nodes['title'].append(child.text)
 
-    if count >= limit:
-        print("total: " + str(total))
-        author_nodes['name'] = list(set(author_nodes['name']))
-        print("authors: " + str(author_nodes['name'].__len__()))
-        print("publications: " + str(publication_nodes['title'].__len__()))
-        count = 0
+    # if count >= limit:
+    #     print("total: " + str(total))
+    #     print("publications: " + str(publication_nodes['title'].__len__()))
+    #     print("relationships: " + str(relationships['name'].__len__()))
+    #     count = 0
     elem.clear()
-print("writting: " + str(author_nodes['name'].__len__()) + " authors")
-pd.DataFrame(author_nodes).to_csv("data/author_nodes.csv")
+
+df_relationships = pd.DataFrame(relationships)
+df_authors = pd.DataFrame(
+    {
+        'name': list(set(df_relationships['name'].values)),
+        'author_id': [x for x in range(1,list(set(df_relationships['name'])).__len__()+1)]
+    }
+)
+print("total: " + str(total))
+print("publications: " + str(publication_nodes['title'].__len__()))
+print("relationships: " + str(relationships['name'].__len__()))
+print("authors: " + str(df_authors['name'].__len__()))
+df_relationships = pd.merge(df_relationships,df_authors,'name')["author_id", "publication_id"]
+
+print("writting: " + str(df_authors['name'].__len__()) + " authors")
+df_authors.to_csv("data/author_nodes.csv")
 author_nodes = {}
 print("writting: " + str(publication_nodes['title'].__len__()) + " publications")
 pd.DataFrame(publication_nodes).to_csv("data/publication_nodes.csv")
 publication_nodes = {}
+print("writting: " + str(relationships['author_id'].__len__()) + " relationships")
+df_relationships.to_csv("data/relationships.csv")
+relationships = {}
 
 '''
 neo4j_home$ bin/neo4j-admin import --nodes "import/movies_header.csv,import/movies.csv" \
