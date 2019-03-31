@@ -52,15 +52,61 @@ for line in answer_6:
 
 # Pregunta 7.- Listado de coautores de un autor (Se denomina coautor a cualquier persona que haya
 # firmado una publicacion).
+pipeline_answer_7 = [{"$project": {'authors': 1}},
+                     {"$match": {"authors": 'Joachim Biskup'}},
+                     {"$unwind" : '$authors' },
+                     {"$group": {"_id":"$authors",
+                                 "coauthors": { "$addToSet": {"$cond" : { "if": { "$eq": ["$authors", "Joachim Biskup"]}, "then": "null", "else": "$authors"}}}}},
+                     {"$project" : {"_id":0,
+                                    "coauthors": { "$cond": {"if": {"$eq": [ "[null]", "$coauthors" ] },"then": "$$REMOVE","else": "$coauthors"}}}}]
+answer_7 = db.publications.aggregate(pipeline_answer_7)
+print 'El listado de los coautores de Joachim Biskup es:'
+for line in answer_7:
+    print(line)
 
 # Pregunta 8.- Edad de los 5 autores con un periodo de publicaciones mas largo (Se considera la Edad
 # de un autor al numero de anyos transcurridos desde la fecha de su primera publicacion
 # hasta la ultima registrada).
+pipeline_answer_8 = [{"$unwind" : '$authors' },
+                     {"$group" : {"_id":"$authors",
+                                "max_year" : {"$max" : {"$substr": [ "$date", 0, 4 ]}},
+                                "min_year" :{"$min" : {"$substr": [ "$date", 0, 4 ]}}}},
+                     {"$addFields": {"max_year_int": {"$toInt": "$max_year"},
+                                     "min_year_int": {"$toInt": "$min_year"}}},
+                     {"$project" : {"max_year":0, "min_year":0}},
+                     {"$addFields": {"ageAuthor": {"$subtract": ["$max_year_int","$min_year_int"]}}},
+                     {"$sort": {"ageAuthor": -1}},{"$limit": 5}]
+answer_8 = db.publications.aggregate(pipeline_answer_8, allowDiskUse=True)
+print 'la edad de los 5 autores con un periodo de publicacion mas largo es:'
+for line in answer_8:
+    print(line)
 
 # Pregunta 9.- Numero de autores novatos, es decir, que tengan una Edad menor de 5 anyos. Se
 # considera la Edad de un autor al numero de anyos transcurridos desde la fecha de su
 # primera publicacion hasta la ultima registrada
+pipeline_answer_9 = [{"$unwind" : '$authors' },
+                     {"$group" :
+                          {"_id":"$authors",
+                           "max_year" : {"$max" : {"$substr": [ "$date", 0, 4 ]}},
+                           "min_year" :{"$min" : {"$substr": [ "$date", 0, 4 ]}}}},
+                     {"$addFields": { "max_year_int": {"$toInt": "$max_year"},
+                                      "min_year_int": {"$toInt": "$min_year"}}},
+                     {"$project" : {"max_year":0, "min_year":0}},
+                     {"$addFields": {"ageAuthor": {"$subtract": ["$max_year_int","$min_year_int"]}}},
+                     {"$match": { "ageAuthor": { "$lt": 5} }},{"$count": "ageAuthor"}]
+answer_9 = db.publications.aggregate(pipeline_answer_9, allowDiskUse=True)
+print 'El numero de autores novatos es el siguiente:'
+for line in answer_9:
+    print(line)
 
 # Pregunta 10.- Porcentaje de publicaciones en revistas con respecto al total de publicaciones.
+pipeline_answer_10 = [{"$project": {"type": 1}},
+                      {"$group":{"_id":"null",
+                                 "count_article": {"$sum": { "$cond" :  [{ "$eq" : ["$type", "article"]}, 1, 0]}},
+                                 "count_total" : {"$sum":1}}},{"$project": { "article_percentage" :{"$multiply": [100,{ "$divide": [ "$count_article", "$count_total"]}]}}},
+                      {"$project": {"_id":0}}]
+answer_10 = db.publications.aggregate(pipeline_answer_10)
+for line in answer_10:
+    print(line)
 
 
