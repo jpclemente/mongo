@@ -1,0 +1,1 @@
+./neo4j-admin import --database practica2.db --nodes "../import/author_nodes.csv" --nodes "../import/publication_nodes.csv" --relationships:WROTE "../import/relationships.csv"
