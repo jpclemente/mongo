@@ -1,16 +1,16 @@
 from lxml import etree
 import pandas as pd
 
-data_path = "data/"
-publication_nodes = {'publication_id:ID': [], 'type':[], 'date':[], 'title':[]}
-relationships = {'name':[], 'publication_id:END_ID': []}
+data_path = "/home/mpena/Documents/data/"
+publication_nodes = {'publication_id:ID': [], 'type:LABEL':[], 'date':[], 'title':[]}
+relationships = {'name':[], 'publication_id:END_ID': [], 'type:TYPE': []}
 count = 0
 total = 0
 publication_id = 0
 author_id = 0
 limit = 500000
 doc = etree.iterparse(
-    data_path + "test.xml",
+    data_path + "dblp.xml",
     tag = ["article", "inproceedings", "incollection"],
     events = ["end"],
     load_dtd=True,
@@ -21,12 +21,13 @@ for event, elem in doc:
     total += 1
     publication_id +=1
     publication_nodes['publication_id:ID'].append(publication_id)
-    publication_nodes['type'].append(elem.tag)
+    publication_nodes['type:LABEL'].append(elem.tag)
     publication_nodes['date'].append(elem.get('mdate'))
     for child in elem.getchildren():
         if child.tag == 'author':
             relationships['name'].append(child.text)
             relationships['publication_id:END_ID'].append(publication_id)
+            relationships['type:TYPE'].append('PUBLICATED')
         elif child.tag == 'title':
             publication_nodes['title'].append(child.text)
     elem.clear()
@@ -41,11 +42,12 @@ relationships = {}
 df_authors = pd.DataFrame(
     {
         'author_id:ID': [x for x in range(publication_id+1,publication_id+list(set(df_relationships['name'])).__len__() + 1)],
-        'name': list(set(df_relationships['name']))
+        'name': list(set(df_relationships['name'])),
+        'type:LABEL' : ['Author' for x in range(len(list(set(df_relationships['name']))))]
     }
 )
-df_relationships = pd.merge(df_relationships, df_authors, on=['name', 'name'])[["author_id:ID", "publication_id:END_ID"]]
-df_relationships.columns = ["author_id:START_ID", "publication_id:END_ID"]
+df_relationships = pd.merge(df_relationships, df_authors, on=['name', 'name', 'name'])[["author_id:ID", "publication_id:END_ID", 'type:TYPE']]
+df_relationships.columns = ["author_id:START_ID", "publication_id:END_ID", 'type:TYPE']
 
 print("writting: " + str(df_authors['name'].__len__()) + " authors")
 df_authors.to_csv(data_path + "author_nodes.csv", index = False)
