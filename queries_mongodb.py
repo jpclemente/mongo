@@ -8,7 +8,8 @@ publications = db.publications
 
 # Pregunta 1.- Listado de todas las publicaciones de un autor determinado.
 start = time.time()
-answer_1 = db.publications.find({"authors": {"$eq":"Joachim Biskup"}}, {"title":1})
+pipeline_answer_1 = [{"$unwind" : "$authors"},{ "$match" : { "authors" : "Joachim Biskup" }}, {"$project" : { "title" : 1 }}]
+answer_1 = db.publications.aggregate(pipeline_answer_1)
 end = time.time()
 print('The time taken, in seconds, for query number 1 is ', end - start)
 print ('El listado de las publicaciones de Joachim Biskup es:')
@@ -20,10 +21,16 @@ print(answer_1_pd)
 
 # Pregunta 2.- Numero de publicaciones de un autor determinado.
 start = time.time()
-answer_2 = db.publications.find({"authors": {"$eq":"Joachim Biskup"}}, {"title":1}).count()
+pipeline_answer_2 = [{"$unwind" : "$authors"},{ "$match" : { "authors" : "Joachim Biskup" }}, {"$project" : { "title" : 1 }}, {"$count": "title"}]
+answer_2 = db.publications.aggregate(pipeline_answer_2)
 end = time.time()
 print('The time taken, in seconds, for query number 2 is ', end - start)
-print ('El numero de publicaciones de Joachim Biskup es ', answer_2)
+print ('El numero de publicaciones de Joachim Biskup es ')
+list_answer_2 = []
+for line in answer_2:
+    list_answer_2.append(line)
+answer_2_pd = pd.DataFrame.from_records(list_answer_2)
+print(answer_2_pd)
 
 
 # Pregunta 3.- Numero de articulos en revista para el anyo 2017.
@@ -63,6 +70,7 @@ answer_5 = db.publications.aggregate(pipeline_answer_5, allowDiskUse=True)
 end = time.time()
 print('The time taken, in seconds, for query number 5 is ', end - start)
 print ('El numero de articulos de revista y numero de articulos en congresos de los diez autores con mas publicaciones totales viene dado a continuacion:')
+pd.set_option('display.max_columns', 10)
 list_answer_5 = []
 for line in answer_5:
     list_answer_5.append(line)
