@@ -4,7 +4,7 @@ import pandas as pd
 data_path = "data/" # Ruta donde están localizados los ficheros de datos.
 
 #Diccionario que iremos completando para despues crear los dataframes
-publication_nodes = {'publication_id:ID': [], 'type:LABEL':[], 'date':[], 'title':[]}
+publication_nodes = {'publication_id:ID': [], 'type':[], 'date':[], 'title':[]}
 relationships = {'name':[], 'publication_id:END_ID': []}
 
 # inicializamos el id de las publicaciones.
@@ -21,7 +21,7 @@ doc = etree.iterparse(
 for event, elem in doc:
     publication_id +=1
     publication_nodes['publication_id:ID'].append(str(publication_id).rjust(10, '0'))
-    publication_nodes['type:LABEL'].append(elem.tag)
+    publication_nodes['type'].append(elem.tag)
     publication_nodes['date'].append(elem.get('mdate'))
     for child in elem.getchildren():
         if child.tag == 'author':
