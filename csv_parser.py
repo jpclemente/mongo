@@ -12,7 +12,7 @@ publication_id = 0
 
 # construimos una instancia de la clase iterparse que nos permitirá recorrer el xml elemento a elemento.
 doc = etree.iterparse(
-    data_path + "test.xml",
+    data_path + "dblp.xml",
     tag = ["article", "inproceedings", "incollection"], # Solo estamos interesados en etiquetas de estos tipos-
     events = ["end"],                                   # Solo necesitamos capturar eventos de finalizacion de etiqueta.
     load_dtd=True,                                      #

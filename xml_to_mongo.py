@@ -1,7 +1,6 @@
 from lxml import etree
 from pymongo import MongoClient
 
-
 def get_dict(element, identifier):
     publication = {}
     publication['_id'] = identifier
@@ -27,6 +26,14 @@ def write(publications):
     print("inproceedings: " + str(inproceedings))
     print("incollection: " + str(incollection))
     print("total: " + str(count))
+
+
+def create_indexes():
+    connection = MongoClient('localhost', 27017)
+    db = connection.practica_mongo
+    db.publications.createIndex({"date": 1, "authors": 1})
+    db.publications.createIndex({"date": 1})
+    db.publications.createIndex({"authors": 1})
 
 
 result = []
@@ -59,3 +66,4 @@ for event, elem in doc:
         result = []
     elem.clear()
 write(result)
+create_indexes()

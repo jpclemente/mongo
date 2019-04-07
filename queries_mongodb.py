@@ -1,9 +1,9 @@
 import time
 import pandas as pd
 from pymongo import MongoClient
+
 client = MongoClient()
-#client = MongoClient('localhost', 27017)
-db = client.practica_mongo_def
+db = client.practica_mongo
 publications = db.publications
 
 # Pregunta 1.- Listado de todas las publicaciones de un autor determinado.
@@ -33,7 +33,7 @@ answer_2_pd = pd.DataFrame.from_records(list_answer_2)
 print(answer_2_pd)
 
 
-# Pregunta 3.- Numero de articulos en revista para el anyo 2017.
+# Pregunta 3.- Numero de articulos en revista para el año 2017.
 start = time.time()
 answer_3 = db.publications.find({"$and": [{"date" : {"$regex": "2017"}}, {"type" :"article"}]}).count()
 end = time.time()
@@ -46,7 +46,7 @@ pipeline_answer_4 = [{"$unwind": "$authors"},
                      { "$match": {"count": { "$lt":5}}},
                      {"$count": "authors"}]
 start = time.time()
-answer_4 = db.publications.aggregate(pipeline_answer_4, allowDiskUse=True)
+answer_4 = db.publications.aggregate(pipeline_answer_4, allowDiskUse=True).hint({"authors_1"})
 end = time.time()
 print('The time taken, in seconds, for query number 4 is ', end - start)
 print ('El numero de autores con menos de 5 publicaciones es ')
@@ -66,7 +66,7 @@ pipeline_answer_5 =[{"$unwind": "$authors"},
                     {"$sort": {"count_all_publications": -1}},
                     {"$limit": 10}]
 start = time.time()
-answer_5 = db.publications.aggregate(pipeline_answer_5, allowDiskUse=True)
+answer_5 = db.publications.aggregate(pipeline_answer_5, allowDiskUse=True).hint({"authors_1"})
 end = time.time()
 print('The time taken, in seconds, for query number 5 is ', end - start)
 print ('El numero de articulos de revista y numero de articulos en congresos de los diez autores con mas publicaciones totales viene dado a continuacion:')
@@ -82,7 +82,7 @@ pipeline_answer_6 =[{"$project": { "numAuthors": { "$size": "$authors" }}},
                     {"$group":{"_id": "null","MeanOfAuthors": {"$avg": "$numAuthors"}}},
                     {"$project" : {"MeanOfAuthors":1, "_id":0}}]
 start = time.time()
-answer_6 = db.publications.aggregate(pipeline_answer_6)
+answer_6 = db.publications.aggregate(pipeline_answer_6).hint({"$natural" :1})
 end = time.time()
 print('The time taken, in seconds, for query number 6 is ', end - start)
 print ('El numero medio de autores de todas las mublicaciones del conjunto de datos es:')
@@ -104,7 +104,7 @@ pipeline_answer_7 = [{"$project": {'authors': 1}},
 start = time.time()
 answer_7 = db.publications.aggregate(pipeline_answer_7)
 end = time.time()
-print('The time taken, in seconds, for query number 7 is ', end - start)
+print('The time taken, in seconds, for query number 7 is ', end - start).hint({"authors_1"})
 print ('El listado de los coautores de Joachim Biskup es:')
 list_answer_7 = []
 for line in answer_7:
@@ -125,7 +125,7 @@ pipeline_answer_8 = [{"$unwind" : '$authors' },
                      {"$addFields": {"ageAuthor": {"$subtract": ["$max_year_int","$min_year_int"]}}},
                      {"$sort": {"ageAuthor": -1}},{"$limit": 5}]
 start = time.time()
-answer_8 = db.publications.aggregate(pipeline_answer_8, allowDiskUse=True)
+answer_8 = db.publications.aggregate(pipeline_answer_8, allowDiskUse=True).hint({"date_1_authors_1"})
 end = time.time()
 print('The time taken, in seconds, for query number 8 is ', end - start)
 print ('La edad de los 5 autores con un periodo de publicacion mas largo es:')
@@ -149,7 +149,7 @@ pipeline_answer_9 = [{"$unwind" : '$authors' },
                      {"$addFields": {"ageAuthor": {"$subtract": ["$max_year_int","$min_year_int"]}}},
                      {"$match": { "ageAuthor": { "$lt": 5} }},{"$count": "ageAuthor"}]
 start = time.time()
-answer_9 = db.publications.aggregate(pipeline_answer_9, allowDiskUse=True)
+answer_9 = db.publications.aggregate(pipeline_answer_9, allowDiskUse=True).hint({"date_1_authors_1"})
 end = time.time()
 print('The time taken, in seconds, for query number 9 is ', end - start)
 print ('El numero de autores novatos es el siguiente:')
