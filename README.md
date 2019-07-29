@@ -1,3 +1,3 @@
 # mongo
 
-# Authors: Javier Pérez clemente
+# Authors: Belén González y Javier Pérez
